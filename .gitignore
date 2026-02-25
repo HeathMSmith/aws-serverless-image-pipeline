@@ -1,0 +1,23 @@
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+terraform.tfvars
+terraform/build/
+terraform/*.zip
+*.tfplan
+*.plan
+
+# Lambda layer build artifacts
+layer/python/
+layer/pillow-layer.zip
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+.DS_Store
+.vscode/
+.idea/
