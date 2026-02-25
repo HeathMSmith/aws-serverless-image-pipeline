@@ -53,19 +53,6 @@ resource "aws_s3_bucket_notification" "uploads_notify" {
   lambda_function {
     lambda_function_arn = aws_lambda_function.processor.arn
     events              = ["s3:ObjectCreated:*"]
-    filter_suffix       = ".jpg"
-  }
-
-  lambda_function {
-    lambda_function_arn = aws_lambda_function.processor.arn
-    events              = ["s3:ObjectCreated:*"]
-    filter_suffix       = ".jpeg"
-  }
-
-  lambda_function {
-    lambda_function_arn = aws_lambda_function.processor.arn
-    events              = ["s3:ObjectCreated:*"]
-    filter_suffix       = ".png"
   }
 
   depends_on = [aws_lambda_permission.allow_s3]

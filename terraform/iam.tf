@@ -17,23 +17,23 @@ resource "aws_iam_role" "lambda_role" {
 
 data "aws_iam_policy_document" "lambda_policy" {
   statement {
-    sid     = "ReadFromUploads"
-    effect  = "Allow"
-    actions = ["s3:GetObject"]
+    sid       = "ReadFromUploads"
+    effect    = "Allow"
+    actions   = ["s3:GetObject"]
     resources = ["${aws_s3_bucket.uploads.arn}/*"]
   }
 
   statement {
-    sid     = "WriteToProcessed"
-    effect  = "Allow"
-    actions = ["s3:PutObject"]
+    sid       = "WriteToProcessed"
+    effect    = "Allow"
+    actions   = ["s3:PutObject"]
     resources = ["${aws_s3_bucket.processed.arn}/*"]
   }
 
   statement {
-    sid     = "CloudWatchLogs"
-    effect  = "Allow"
-    actions = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
+    sid       = "CloudWatchLogs"
+    effect    = "Allow"
+    actions   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
     resources = ["arn:aws:logs:*:*:*"]
   }
 }
