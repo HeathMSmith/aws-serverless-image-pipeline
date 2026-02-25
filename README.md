@@ -55,3 +55,7 @@ terraform destroy
 - Add structured JSON logging
 - Add CI (GitHub Actions)
 - Convert to container-based Lambda
+
+## Lessons Learned
+
+- S3 notification suffix filters are case-sensitive, so we trigger on all object creates and let the Lambda handler filter extensions.
