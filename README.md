@@ -37,10 +37,24 @@ Upload → S3 Event → Lambda → Process → Output Bucket
 ## Demo
 
 ### Original Image
-![Original](./assets/screenshots/upload.png)
+![Original](./assets/screenshots/original.png)
 
-### Processed Outputs
-![Processed](./assets/screenshots/processed.png)
+### 256px Thumbnail
+![256](./assets/screenshots/thumb-256.png)
+
+### 1024px Thumbnail
+![1024](./assets/screenshots/thumb-1024.png)
+
+### Pipeline Execution
+![Upload](./assets/screenshots/upload.png)
+
+### Output
+![Output](./assets/screenshots/output.png)
+
+### Logs
+![Logs](./assets/screenshots/logs.png)
+
+
 
 ##Testing
 
