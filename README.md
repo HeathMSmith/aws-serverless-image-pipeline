@@ -56,8 +56,8 @@ Upload → S3 Event → Lambda → Process → Output Bucket
 
 
 
-##Testing
-
+## Testing
+````
 UPLOADS_BUCKET=$(terraform output -raw uploads_bucket)
 PROCESSED_BUCKET=$(terraform output -raw processed_bucket)
 
@@ -66,13 +66,18 @@ aws s3 cp ./test.jpg s3://$UPLOADS_BUCKET/test.jpg
 aws s3 ls s3://$PROCESSED_BUCKET/processed/thumb_256/
 aws s3 ls s3://$PROCESSED_BUCKET/processed/thumb_1024/
 
+````
+
 ## Deployment
 
+````
 cd terraform
 
 terraform init
 terraform plan -out=tfplan
 terraform apply tfplan
+
+````
 
 ## Security Design
 
