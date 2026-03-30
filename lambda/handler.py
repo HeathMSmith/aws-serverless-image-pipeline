@@ -66,28 +66,55 @@ def lambda_handler(event, context):
             continue
 
         filename_stem = Path(src_key).stem
-        out_name = f"{filename_stem}.jpg"
+
+        out_name_256 = f"{filename_stem}-256.jpg"
+        out_name_1024 = f"{filename_stem}-1024.jpg"
 
         # Safety against accidental recursion if notifications are misconfigured later
         if src_bucket == DEST_BUCKET and (src_key.startswith(PREFIX_256) or src_key.startswith(PREFIX_1024)):
             print(f"Skipping already-processed object: {src_key}")
             continue
 
-        print(f"Downloading s3://{src_bucket}/{src_key}")
+        print({
+            "action": "download",
+            "bucket": src_bucket,
+            "key": src_key
+        })
         obj = s3.get_object(Bucket=src_bucket, Key=src_key)
         body = obj["Body"].read()
+        if len(body) > 10 * 1024 * 1024:  # 10MB guard
+            print(f"Skipping large file: {src_key}")
+            continue
 
         with Image.open(io.BytesIO(body)) as img:
             img_256 = _resize_max(img.copy(), SIZE_256)
             jpeg_256 = _to_jpeg_bytes(img_256)
-            key_256 = f"{PREFIX_256}{out_name}"
+            key_256 = f"{PREFIX_256}{out_name_256}"
             print(f"Writing 256 thumbnail: s3://{DEST_BUCKET}/{key_256}")
-            s3.put_object(Bucket=DEST_BUCKET, Key=key_256, Body=jpeg_256, ContentType="image/jpeg")
+            s3.put_object(
+                Bucket=DEST_BUCKET,
+                Key=key_256,
+                Body=jpeg_256,
+                ContentType="image/jpeg",
+                Metadata={
+                    "source-key": src_key,
+                    "processed-by": "lambda-image-pipeline"
+                }
+            )
 
             img_1024 = _resize_max(img.copy(), SIZE_1024)
             jpeg_1024 = _to_jpeg_bytes(img_1024)
-            key_1024 = f"{PREFIX_1024}{out_name}"
+            key_1024 = f"{PREFIX_1024}{out_name_1024}"
             print(f"Writing 1024 thumbnail: s3://{DEST_BUCKET}/{key_1024}")
-            s3.put_object(Bucket=DEST_BUCKET, Key=key_1024, Body=jpeg_1024, ContentType="image/jpeg")
+            s3.put_object(
+                Bucket=DEST_BUCKET,
+                Key=key_1024,
+                Body=jpeg_1024,
+                ContentType="image/jpeg",
+                Metadata={
+                    "source-key": src_key,
+                    "processed-by": "lambda-image-pipeline"
+                }
+            )
 
     return {"statusCode": 200, "body": "OK"}
