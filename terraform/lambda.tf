@@ -28,15 +28,29 @@ resource "aws_lambda_function" "processor" {
 
   environment {
     variables = {
-      DEST_BUCKET      = aws_s3_bucket.processed.bucket
+      DEST_BUCKET = aws_s3_bucket.processed.bucket
+
+      # Source control
+      SOURCE_PREFIX = var.source_prefix
+
+      # Output prefixes
       DEST_PREFIX_256  = var.dest_prefix_256
       DEST_PREFIX_1024 = var.dest_prefix_1024
-      SIZE_256         = tostring(var.size_256)
-      SIZE_1024        = tostring(var.size_1024)
+
+      # Resize config
+      SIZE_256  = tostring(var.size_256)
+      SIZE_1024 = tostring(var.size_1024)
+
+      # Runtime safety controls
+      MAX_FILE_SIZE_MB   = tostring(var.max_file_size_mb)
+      ALLOWED_EXTENSIONS = var.allowed_extensions
+
+      # Logging
+      LOG_LEVEL = var.log_level
     }
   }
 
-  tags = var.tags
+  tags = local.common_tags
 }
 
 resource "aws_lambda_permission" "allow_s3" {
@@ -54,7 +68,7 @@ resource "aws_s3_bucket_notification" "uploads_notify" {
     lambda_function_arn = aws_lambda_function.processor.arn
     events              = ["s3:ObjectCreated:*"]
 
-    filter_prefix = "uploads/"
+    filter_prefix = var.source_prefix
     #filter_suffix = ".jpg"
   }
 

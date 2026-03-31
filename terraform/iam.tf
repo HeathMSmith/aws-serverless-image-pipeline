@@ -12,7 +12,7 @@ data "aws_iam_policy_document" "lambda_assume" {
 resource "aws_iam_role" "lambda_role" {
   name               = "${local.name}-lambda-role"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
-  tags               = var.tags
+  tags               = local.common_tags
 }
 
 data "aws_iam_policy_document" "lambda_policy" {
@@ -24,6 +24,13 @@ data "aws_iam_policy_document" "lambda_policy" {
   }
 
   statement {
+    sid       = "ReadProcessedOutputs"
+    effect    = "Allow"
+    actions   = ["s3:GetObject"]
+    resources = ["${aws_s3_bucket.processed.arn}/*"]
+  }
+
+  statement {
     sid       = "WriteToProcessed"
     effect    = "Allow"
     actions   = ["s3:PutObject"]
@@ -31,9 +38,21 @@ data "aws_iam_policy_document" "lambda_policy" {
   }
 
   statement {
-    sid       = "CloudWatchLogs"
+    sid       = "ListProcessedBucket"
     effect    = "Allow"
-    actions   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents", "logs:DescribeLogStreams"]
+    actions   = ["s3:ListBucket"]
+    resources = [aws_s3_bucket.processed.arn]
+  }
+
+  statement {
+    sid    = "CloudWatchLogs"
+    effect = "Allow"
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+      "logs:DescribeLogStreams"
+    ]
     resources = ["arn:aws:logs:*:*:log-group:/aws/lambda/${local.name}*"]
   }
 }
@@ -41,7 +60,7 @@ data "aws_iam_policy_document" "lambda_policy" {
 resource "aws_iam_policy" "lambda_policy" {
   name   = "${local.name}-lambda-policy"
   policy = data.aws_iam_policy_document.lambda_policy.json
-  tags   = var.tags
+  tags   = local.common_tags
 }
 
 resource "aws_iam_role_policy_attachment" "attach" {

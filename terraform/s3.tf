@@ -1,11 +1,11 @@
 resource "aws_s3_bucket" "uploads" {
   bucket = local.uploads_bucket
-  tags   = var.tags
+  tags   = local.common_tags
 }
 
 resource "aws_s3_bucket" "processed" {
   bucket = local.processed_bucket
-  tags   = var.tags
+  tags   = local.common_tags
 }
 
 resource "aws_s3_bucket_versioning" "uploads" {
