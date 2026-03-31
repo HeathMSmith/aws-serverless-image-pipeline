@@ -43,6 +43,12 @@ data "aws_iam_policy_document" "lambda_policy" {
     actions   = ["s3:ListBucket"]
     resources = [aws_s3_bucket.processed.arn]
   }
+  statement {
+    sid       = "WriteToDLQ"
+    effect    = "Allow"
+    actions   = ["sqs:SendMessage"]
+    resources = [aws_sqs_queue.lambda_dlq.arn]
+  }
 
   statement {
     sid    = "CloudWatchLogs"

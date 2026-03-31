@@ -151,3 +151,13 @@ variable "alarm_topic_arn" {
   description = "Optional SNS topic ARN for CloudWatch alarm notifications"
   default     = ""
 }
+variable "dlq_message_retention_seconds" {
+  type        = number
+  description = "How long failed events stay in the DLQ"
+  default     = 1209600 # 14 days
+
+  validation {
+    condition     = var.dlq_message_retention_seconds >= 60 && var.dlq_message_retention_seconds <= 1209600
+    error_message = "dlq_message_retention_seconds must be between 60 and 1209600."
+  }
+}

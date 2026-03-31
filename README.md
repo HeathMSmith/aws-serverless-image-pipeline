@@ -1,10 +1,14 @@
+
 # Event-Driven Image Processing Pipeline on AWS (Terraform)
 
-A serverless, event-driven image processing pipeline built on AWS using Terraform.
+A production-grade, serverless image processing pipeline built on AWS using Terraform.
 
-This project demonstrates how user-uploaded images can be automatically processed using S3 event notifications and AWS Lambda, without requiring servers or manual orchestration.
+## What This Project Demonstrates
+- Event-driven serverless architecture on AWS
+- Infrastructure as Code (Terraform)
+- Production-oriented design (IAM, observability, DLQ, idempotency)
 
-Images are resized and optimized for web delivery upon upload, then stored in a separate processed bucket.
+---
 
 ## Architecture
 
@@ -12,27 +16,109 @@ Upload → S3 Event → Lambda → Process → Output Bucket
 
 ![Architecture](./assets/architecture/serverless-image-pipeline.png)
 
+---
+
+## Architecture Decisions
+
+### Why S3 Event Notifications?
+S3 provides a native, scalable trigger mechanism that eliminates polling and enables immediate event-driven processing.
+
+### Why AWS Lambda?
+Lambda enables on-demand compute for burst workloads with no infrastructure management.
+
+### Why Separate Buckets?
+- Prevents recursive triggers  
+- Isolates raw vs processed data  
+- Improves security boundaries  
+
+### Why Lambda Layers?
+- Keeps deployment package small  
+- Improves reusability  
+- Simplifies dependency management  
+
+### Why Terraform?
+- Reproducible infrastructure  
+- Version-controlled architecture  
+- Environment consistency  
+
+---
+
 ## How It Works
 
-1. A user uploads an image to the S3 uploads bucket
-2. S3 triggers a Lambda function via event notification
+1. User uploads image to `incoming/`
+2. S3 triggers Lambda (prefix-filtered)
 3. Lambda:
-   - Downloads the image
+   - Validates file type and size
+   - Downloads image
    - Generates:
      - 256px thumbnail
      - 1024px resized image
-   - Converts output to optimized JPEG format
-4. Processed images are written to the processed bucket
-5. Logs are captured in CloudWatch for observability
+   - Converts to optimized JPEG
+4. Outputs written to:
+   - `processed/thumb_256/`
+   - `processed/thumb_1024/`
+5. Logs, metrics, and alarms captured in CloudWatch
+
+---
+
+## Data Flow
+
+- Input: `incoming/<filename>`
+- Output:
+  - `processed/thumb_256/<filename>-256.jpg`
+  - `processed/thumb_1024/<filename>-1024.jpg`
+
+---
 
 ## Key Features
 
 - Fully serverless architecture
-- Event-driven processing (no polling)
-- Automatic image resizing and optimization
-- Secure IAM with least-privilege access
-- Lambda layers for dependency management (Pillow)
-- Infrastructure provisioned with Terraform
+- Event-driven processing
+- Prefix-filtered triggers
+- Image resizing and optimization
+- Idempotent processing (HeadObject checks)
+- Structured logging
+- CloudWatch alarms and dashboard
+- SQS Dead Letter Queue (DLQ)
+- Secure IAM (least privilege)
+- Terraform IaC
+
+---
+
+## Observability
+
+- Structured logs in CloudWatch
+- Error tracking
+- Duration monitoring
+- Dashboard visualizing:
+  - Invocations
+  - Errors
+  - Duration
+  - Throttles
+
+---
+
+## Failure Handling
+
+- Invalid files rejected
+- Size limits enforced
+- Errors logged with context
+- Failed events sent to SQS DLQ
+- Replay capability via script
+
+---
+
+## DLQ Replay
+
+Replay failed events:
+
+```bash
+./scripts/replay_dlq.py \
+  --queue-url "$(cd terraform && terraform output -raw lambda_dlq_url)" \
+  --delete-message
+```
+
+---
 
 ## Demo
 
@@ -45,61 +131,54 @@ Upload → S3 Event → Lambda → Process → Output Bucket
 ### 1024px Thumbnail
 ![1024](./assets/screenshots/thumb-1024.png)
 
-### Pipeline Execution
-![Upload](./assets/screenshots/upload.png)
-
-### Output
-![Output](./assets/screenshots/output.png)
-
 ### Logs
 ![Logs](./assets/screenshots/logs.png)
 
-
+---
 
 ## Testing
-````
+
+```bash
 UPLOADS_BUCKET=$(terraform output -raw uploads_bucket)
 PROCESSED_BUCKET=$(terraform output -raw processed_bucket)
 
-aws s3 cp ./test.jpg s3://$UPLOADS_BUCKET/test.jpg
+aws s3 cp ./test.jpg s3://$UPLOADS_BUCKET/incoming/test.jpg
+```
 
-aws s3 ls s3://$PROCESSED_BUCKET/processed/thumb_256/
-aws s3 ls s3://$PROCESSED_BUCKET/processed/thumb_1024/
-
-````
+---
 
 ## Deployment
 
-````
+```bash
 cd terraform
-
 terraform init
 terraform plan -out=tfplan
 terraform apply tfplan
+```
 
-````
+---
 
-## Security Design
+## Security
 
-- S3 buckets are not publicly accessible
-- Access is restricted via least-privilege IAM policies
-- Lambda can only read from uploads and write to processed bucket
-- No direct access to processed outputs without explicit permissions
+- Private S3 buckets
+- Public access blocked
+- Least-privilege IAM
+- Scoped Lambda permissions
+- No long-lived credentials
 
-## Why This Architecture Matters
+---
 
-This project demonstrates a fully event-driven architecture using AWS-native services.
+## Cost
 
-By leveraging S3 event notifications and Lambda, the system eliminates the need for polling or manual workflows, allowing scalable, automatic processing of uploaded content.
+- Pay-per-use Lambda
+- S3 storage only
+- DLQ negligible cost
 
-This pattern is widely used in real-world applications such as:
-- Image thumbnail generation
-- Media processing pipelines
-- Content ingestion systems
+---
 
 ## Future Enhancements
 
-- Dead Letter Queue (SQS) for failed processing
-- Structured JSON logging
-- CI/CD pipeline using GitHub Actions + OIDC
-- Support for additional file types and formats
+- CI/CD pipeline (GitHub Actions + OIDC)
+- Multi-region deployment
+- Advanced transformations
+- Metadata tracking (DynamoDB)

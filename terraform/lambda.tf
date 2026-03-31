@@ -50,6 +50,10 @@ resource "aws_lambda_function" "processor" {
     }
   }
 
+  dead_letter_config {
+    target_arn = aws_sqs_queue.lambda_dlq.arn
+  }
+
   tags = local.common_tags
 }
 
