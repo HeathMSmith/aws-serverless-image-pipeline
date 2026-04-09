@@ -1,4 +1,3 @@
-
 # Event-Driven Image Processing Pipeline on AWS (Terraform)
 
 A production-grade, serverless image processing pipeline built on AWS using Terraform.
@@ -13,6 +12,8 @@ A production-grade, serverless image processing pipeline built on AWS using Terr
 ## Architecture
 
 Upload → S3 Event → Lambda → Process → Output Bucket
+
+The diagram below illustrates the event-driven flow from S3 upload through Lambda processing and output storage, including DLQ and observability components.
 
 ![Architecture](./assets/architecture/serverless-image-pipeline.png)
 
@@ -113,9 +114,7 @@ Lambda enables on-demand compute for burst workloads with no infrastructure mana
 Replay failed events:
 
 ```bash
-./scripts/replay_dlq.py \
-  --queue-url "$(cd terraform && terraform output -raw lambda_dlq_url)" \
-  --delete-message
+./scripts/replay_dlq.py   --queue-url "$(cd terraform && terraform output -raw lambda_dlq_url)"   --delete-message
 ```
 
 ---
@@ -158,21 +157,55 @@ terraform apply tfplan
 
 ---
 
-## Security
+## Teardown
 
-- Private S3 buckets
-- Public access blocked
-- Least-privilege IAM
-- Scoped Lambda permissions
-- No long-lived credentials
+To avoid ongoing charges, destroy all resources:
+
+```bash
+cd terraform
+terraform destroy
+```
+
+If prompted, confirm with `yes`.
+
+Note: Ensure no objects remain in S3 buckets if destroy fails due to non-empty buckets.
 
 ---
 
-## Cost
+## Security Considerations
 
-- Pay-per-use Lambda
-- S3 storage only
-- DLQ negligible cost
+- S3 buckets are private with Block Public Access enabled
+- Lambda execution role follows least-privilege principles
+- S3 event notifications are prefix-scoped to avoid unintended triggers
+- No public endpoints or direct access to processing components
+- DLQ ensures failure isolation without data loss
+- No long-lived credentials (designed for OIDC-based CI/CD integration)
+
+Future improvement:
+- KMS encryption for S3 and environment variables
+
+---
+
+## Cost Notes
+
+This architecture is designed to operate within AWS Free Tier under low usage.
+
+Estimated costs:
+- Lambda: Free tier covers 1M requests/month
+- S3:
+  - Storage: ~$0.023/GB/month
+  - Requests: minimal under low usage
+- SQS (DLQ): negligible unless high failure volume
+- CloudWatch:
+  - Logs and metrics may incur small charges (~$1–$5/month depending on usage)
+
+Typical monthly cost (light usage):
+~$0 – $5
+
+Cost optimization decisions:
+- Serverless (no idle compute)
+- Event-driven (no polling)
+- Minimal storage footprint
 
 ---
 
