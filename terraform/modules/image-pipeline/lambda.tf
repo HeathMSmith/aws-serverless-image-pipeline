@@ -1,19 +1,19 @@
 data "archive_file" "lambda_zip" {
   type        = "zip"
-  source_file = "${path.module}/../lambda/handler.py"
+  source_file = "${path.module}/../../../lambda/handler.py"
   output_path = "${path.module}/build/lambda.zip"
 }
 
 resource "aws_lambda_layer_version" "pillow" {
-  layer_name          = "${local.name}-pillow"
-  filename            = "${path.module}/../layer/pillow-layer.zip"
-  source_code_hash    = filebase64sha256("${path.module}/../layer/pillow-layer.zip")
+  layer_name          = "${local.name_prefix}-pillow"
+  filename            = "${path.module}/../../../layer/pillow-layer.zip"
+  source_code_hash    = filebase64sha256("${path.module}/../../../layer/pillow-layer.zip")
   compatible_runtimes = ["python3.12"]
   description         = "Pillow dependency for image resizing"
 }
 
 resource "aws_lambda_function" "processor" {
-  function_name = "${local.name}-processor"
+  function_name = "${local.name_prefix}-processor"
   role          = aws_iam_role.lambda_role.arn
   handler       = "handler.lambda_handler"
   runtime       = "python3.12"
