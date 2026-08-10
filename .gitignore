@@ -4,7 +4,7 @@
 crash.log
 *.tfvars
 terraform.tfvars
-terraform/build/
+**/build/*
 terraform/*.zip
 *.tfplan
 *.plan
