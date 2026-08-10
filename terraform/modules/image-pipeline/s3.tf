@@ -1,11 +1,13 @@
 resource "aws_s3_bucket" "uploads" {
-  bucket = local.uploads_bucket
-  tags   = local.common_tags
+  bucket        = local.uploads_bucket
+  force_destroy = true
+  tags          = local.common_tags
 }
 
 resource "aws_s3_bucket" "processed" {
-  bucket = local.processed_bucket
-  tags   = local.common_tags
+  bucket        = local.processed_bucket
+  force_destroy = true
+  tags          = local.common_tags
 }
 
 resource "aws_s3_bucket_versioning" "uploads" {
