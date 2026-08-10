@@ -2,6 +2,19 @@
 
 set -euo pipefail
 
+# Verify Docker is installed and the daemon is available before starting the build.
+if ! command -v docker >/dev/null 2>&1; then
+    echo "ERROR: Docker is required to build the Pillow Lambda layer." >&2
+    echo "Install Docker and rerun this script." >&2
+    exit 1
+fi
+
+if ! docker info >/dev/null 2>&1; then
+    echo "ERROR: Docker is installed, but the Docker daemon is not available." >&2
+    echo "Start Docker Desktop (or your Docker daemon) and rerun this script." >&2
+    exit 1
+fi
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LAYER_DIR="${ROOT_DIR}/layer"
 PYTHON_DIR="${LAYER_DIR}/python"
