@@ -41,6 +41,10 @@ runs:
       with:
         terraform_version: ${{ inputs.terraform-version }}
 
+    - name: Build Pillow Lambda Layer
+      shell: bash
+      run: ./scripts/build_pillow_layer.sh
+
     - name: Terraform Init
       shell: bash
       working-directory: ${{ inputs.working-directory }}
