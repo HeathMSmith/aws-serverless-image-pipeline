@@ -21,8 +21,8 @@ resource "aws_lambda_function" "processor" {
   filename         = data.archive_file.lambda_zip.output_path
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
 
-  timeout     = 30
-  memory_size = 512
+  timeout     = var.lambda_timeout
+  memory_size = var.lambda_memory_size
 
   layers = [aws_lambda_layer_version.pillow.arn]
 
