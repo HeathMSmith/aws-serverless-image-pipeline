@@ -10,7 +10,7 @@ data "aws_iam_policy_document" "lambda_assume" {
 }
 
 resource "aws_iam_role" "lambda_role" {
-  name               = "${local.name}-lambda-role"
+  name               = "${local.name_prefix}-lambda-role"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
   tags               = local.common_tags
 }
@@ -59,12 +59,12 @@ data "aws_iam_policy_document" "lambda_policy" {
       "logs:PutLogEvents",
       "logs:DescribeLogStreams"
     ]
-    resources = ["arn:aws:logs:*:*:log-group:/aws/lambda/${local.name}*"]
+    resources = ["arn:aws:logs:*:*:log-group:/aws/lambda/${local.name_prefix}*"]
   }
 }
 
 resource "aws_iam_policy" "lambda_policy" {
-  name   = "${local.name}-lambda-policy"
+  name   = "${local.name_prefix}-lambda-policy"
   policy = data.aws_iam_policy_document.lambda_policy.json
   tags   = local.common_tags
 }
