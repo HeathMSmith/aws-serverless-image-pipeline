@@ -19,10 +19,12 @@ permissions:
   id-token: write
   contents: read
 
+
+
 jobs:
   destroy-plan:
     name: Destroy Plan
-    if: github.event.inputs.confirm == 'destroy'
+    if: github.ref == 'refs/heads/main' && github.event.inputs.confirm == 'destroy'
     runs-on: ubuntu-latest
 
     environment: ${{ github.event.inputs.environment }}

@@ -19,6 +19,9 @@ on:
           - prod
         default: dev
 
+concurrency:
+  group: terraform-plan-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.event.inputs.environment }}
+  cancel-in-progress: true
 jobs:
   plan:
     runs-on: ubuntu-latest
