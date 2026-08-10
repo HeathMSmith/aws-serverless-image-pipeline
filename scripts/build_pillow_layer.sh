@@ -9,20 +9,28 @@ ZIP_FILE="${LAYER_DIR}/pillow-layer.zip"
 
 PILLOW_VERSION="12.1.1"
 
+LAMBDA_IMAGE="public.ecr.aws/lambda/python@sha256:78a6662867dcca83dca5d950317c92c6ee8316199520b384a83f0d8e4874f6c6"
+
 echo "Building Pillow Lambda layer..."
+echo "Pillow version: ${PILLOW_VERSION}"
+echo "Lambda build image: ${LAMBDA_IMAGE}"
 
 rm -rf "${PYTHON_DIR}"
 rm -f "${ZIP_FILE}"
 
 mkdir -p "${PYTHON_DIR}"
 
-python3 -m pip install \
-  --platform manylinux2014_x86_64 \
-  --implementation cp \
-  --python-version 3.12 \
-  --only-binary=:all: \
-  --target "${PYTHON_DIR}" \
-  "Pillow==${PILLOW_VERSION}"
+echo "Installing Pillow inside the AWS Lambda Python 3.12 container..."
+
+docker run --rm \
+  --platform linux/amd64 \
+  -v "${LAYER_DIR}:/layer" \
+  --entrypoint /bin/bash \
+  "${LAMBDA_IMAGE}" \
+  -c "pip install \
+    --no-compile \
+    --target /layer/python \
+    'Pillow==${PILLOW_VERSION}'"
 
 echo "Removing generated Python bytecode..."
 
@@ -46,7 +54,7 @@ zip_file = Path(os.environ["ZIP_FILE"])
 # ZIP timestamps cannot be earlier than 1980.
 fixed_time = (2020, 1, 1, 0, 0, 0)
 
-# Sort all files to guarantee deterministic archive ordering.
+# Sort files to guarantee deterministic archive ordering.
 files = sorted(
     (path for path in python_dir.rglob("*") if path.is_file()),
     key=lambda path: path.relative_to(python_dir.parent).as_posix(),
