@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "terraform/**"
+      - "scripts/**"
       - ".github/workflows/**"
       - ".github/actions/**"
 
