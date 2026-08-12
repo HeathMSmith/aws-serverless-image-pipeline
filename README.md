@@ -111,11 +111,15 @@ Lambda enables on-demand compute for burst workloads with no infrastructure mana
 
 ## DLQ Replay
 
-Replay failed events:
+Replay failed events from the development environment:
 
 ```bash
-./scripts/replay_dlq.py   --queue-url "$(cd terraform && terraform output -raw lambda_dlq_url)"   --delete-message
+./scripts/replay_dlq.py \
+  --queue-url "$(terraform -chdir=terraform/environments/dev output -raw lambda_dlq_url)" \
+  --delete-message
 ```
+
+Replace `dev` with `prod` when operating against the production environment.
 
 ---
 
@@ -137,38 +141,51 @@ Replay failed events:
 
 ## Testing
 
-```bash
-UPLOADS_BUCKET=$(terraform output -raw uploads_bucket)
-PROCESSED_BUCKET=$(terraform output -raw processed_bucket)
+The following example tests the development environment:
 
-aws s3 cp ./test.jpg s3://$UPLOADS_BUCKET/incoming/test.jpg
+```bash
+UPLOADS_BUCKET=$(terraform -chdir=terraform/environments/dev output -raw uploads_bucket)
+PROCESSED_BUCKET=$(terraform -chdir=terraform/environments/dev output -raw processed_bucket)
+
+aws s3 cp ./test.jpg "s3://$UPLOADS_BUCKET/incoming/test.jpg"
 ```
+
+Replace `dev` with `prod` when testing the production environment.
 
 ---
 
 ## Deployment
 
+Terraform is organized into separate `dev` and `prod` environment roots under `terraform/environments/`.
+
+For local development-environment operations:
+
 ```bash
-cd terraform
-terraform init
-terraform plan -out=tfplan
-terraform apply tfplan
+terraform -chdir=terraform/environments/dev init
+terraform -chdir=terraform/environments/dev plan -out=tfplan
+terraform -chdir=terraform/environments/dev apply tfplan
 ```
+
+Replace `dev` with `prod` to target the production environment.
+
+For normal repository operations, use the GitHub Actions Terraform workflows so that AWS authentication and environment-specific execution remain consistent with the project's CI/CD process.
 
 ---
 
 ## Teardown
 
-To avoid ongoing charges, destroy all resources:
+Infrastructure teardown is handled through the controlled **Terraform Destroy** GitHub Actions workflow.
 
-```bash
-cd terraform
-terraform destroy
-```
+When running the workflow:
 
-If prompted, confirm with `yes`.
+1. Select the target environment (`dev` or `prod`).
+2. Enter the required destroy confirmation.
+3. Review the generated Terraform destroy plan.
+4. Allow the workflow to apply the reviewed plan.
 
-Note: Ensure no objects remain in S3 buckets if destroy fails due to non-empty buckets.
+This keeps destructive operations aligned with the same environment-specific Terraform roots and AWS authentication model used by the deployment workflows.
+
+If destruction fails because an S3 bucket contains objects, empty the affected bucket before retrying the controlled destroy workflow.
 
 ---
 
